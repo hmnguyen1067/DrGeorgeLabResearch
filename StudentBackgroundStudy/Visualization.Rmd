@@ -1,0 +1,175 @@
+---
+title: "Graph"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, fig.align="center", fig.margin = TRUE, out.width = "76%", results='asis', message=FALSE)
+library(ggplot2)
+library(dplyr)
+library(randomForest)
+library(tidyverse)
+library(scales)
+library(rpart)
+library(rpart.plot)
+library(factoextra)
+library(reshape2)
+library(cluster)
+set.seed(123)
+
+survey = read.csv("StudentSurveyData.csv", na.strings = "")
+survey = survey %>%
+  select(-c(HighSchool, County, MemGradEngi, MemGradMajor, MemGradMajorYesNo, MemGradEngiYesNo))
+
+survey = na.omit(survey)
+
+UnsupervisedRF = randomForest(x = survey, proximity=TRUE, 
+                                    importance = TRUE, na.action = na.omit)
+
+tempGenMat = cmdscale(1 - UnsupervisedRF$proximity, eig=TRUE)
+
+GenProxDF = data.frame(tempGenMat$points)
+colnames(GenProxDF) = c("Dim 1", "Dim 2")
+
+pm <- eclust(GenProxDF, FUNcluster="pam", k=3, hc_metric = "euclidean")
+
+survey.c<-cbind(survey, pm$cluster)
+colnames(survey.c)[19]<-c("Group")
+
+df.m <- melt(survey.c, id.var = "Group")
+df.m$Group <- as.character(df.m$Group)
+
+graph_plot = function(data, name) {
+  df.m = data %>%
+    filter(variable == name)
+  
+  tTable = prop.table(t(table(df.m$Group, df.m$value)), 2)
+  
+  theTable = knitr::kable(tTable,
+                          align = "c",
+                          longtable = TRUE,
+                          caption = name)
+  
+  p <- ggplot(data = df.m, aes(x=value)) +
+    geom_bar(aes(fill = Group)) +
+    facet_wrap( ~ variable, scales="free", ncol = 2) +
+    xlab(label = NULL) + ylab(label = NULL) +
+    guides(fill=guide_legend(title="Groups")) + 
+    theme(axis.text.x  = element_text(angle=60, hjust = 1))
+  
+  print(p) 
+  
+  return(theTable)
+}
+```
+
+```{r 1}
+# graph_plot(df.m, "DataReference")
+```
+
+<!-- \newpage -->
+
+```{r 2}
+# graph_plot(df.m, "DeclaredMajor")
+```
+
+<!-- \newpage -->
+
+```{r 3}
+# graph_plot(df.m, "SecondMajor")
+```
+
+<!-- \newpage -->
+
+```{r 18}
+graph_plot(df.m, "Gender")
+```
+
+\newpage
+
+```{r 4}
+graph_plot(df.m, "MajorArea")
+```
+
+\newpage
+
+```{r 5}
+graph_plot(df.m, "Ethnicity")
+```
+
+\newpage
+
+```{r 6}
+# graph_plot(df.m, "Year")
+```
+
+<!-- \newpage -->
+
+```{r 7}
+# graph_plot(df.m, "TotalToGraduate")
+```
+
+<!-- \newpage -->
+
+```{r 8}
+graph_plot(df.m, "MajorReason")
+```
+
+\newpage
+
+```{r 9}
+graph_plot(df.m, "FamilyScience4Science")
+```
+
+\newpage
+
+```{r 10}
+graph_plot(df.m, "FamilyArt4Art")
+```
+
+\newpage
+
+```{r 11}
+graph_plot(df.m, "MotherEdu")
+```
+
+\newpage
+
+```{r 12}
+graph_plot(df.m, "FatherEdu")
+```
+
+\newpage
+
+```{r 13}
+graph_plot(df.m, "PostCollegePlan")
+```
+
+\newpage
+
+```{r 14}
+# graph_plot(df.m, "HSType")
+```
+
+<!-- \newpage -->
+
+```{r 15}
+graph_plot(df.m, "STEMCampProgram")
+```
+
+\newpage
+
+```{r 16}
+graph_plot(df.m, "ArtCampProgram")
+```
+
+<!-- \newpage -->
+
+```{r 17}
+# graph_plot(df.m, "GPA")
+```
+
+
+
+
+
